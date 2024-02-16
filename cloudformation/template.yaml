@@ -1,0 +1,35 @@
+Resources:
+  CfSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: cf-sns-topic-123
+
+  CfSQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: cf-sqs-queue-123
+      DelaySeconds: 2
+
+  CfSNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CfSNSTopic
+      Protocol: sqs
+      Endpoint: !GetAtt CfSQSQueue.Arn
+
+  CfSQSQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref CfSQSQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowSNSMessages
+            Effect: Allow
+            Principal: "*"
+            Action: sqs:SendMessage
+            Resource: !GetAtt CfSQSQueue.Arn
+            Condition:
+              ArnEquals:
+                "aws:SourceArn": !Ref CfSNSTopic
